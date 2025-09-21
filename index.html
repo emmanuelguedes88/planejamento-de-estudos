@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plano de Estudos Ultra - Auditor-Fiscal GO</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS File -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="antialiased text-gray-800 bg-gradient-to-br from-gray-50 to-blue-100 min-h-screen">
+
+    <!-- Modal de Autenticação -->
+    <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center transform transition-all scale-95 opacity-0" id="authContent">
+            
+            <!-- Formulário de Login -->
+            <div id="login-form" class="auth-form active">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Bem-vindo de volta!</h2>
+                <p class="text-slate-500 mb-6">Faça login para continuar.</p>
+                <div class="space-y-4 text-left">
+                    <input type="email" id="login-email" placeholder="Seu e-mail" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="relative">
+                        <input type="password" id="login-password" placeholder="Sua senha" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button class="toggle-password absolute inset-y-0 right-0 px-3 flex items-center text-gray-500">
+                             <svg class="h-5 w-5 eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                             <svg class="h-5 w-5 eye-closed hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-3.11 3.563-5.518 6.814-6.166M9 9a3 3 0 116 0 3 3 0 01-6 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 2l20 20" /></svg>
+                        </button>
+                    </div>
+                </div>
+                 <a href="#" id="show-forgot-password" class="text-xs text-blue-600 hover:underline text-right block mt-2">Esqueceu a senha?</a>
+                <button id="login-btn" class="mt-4 w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-all">Entrar</button>
+                <p class="text-sm text-slate-500 mt-4">Não tem uma conta? <a href="#" id="show-signup" class="font-semibold text-blue-600 hover:underline">Cadastre-se</a></p>
+            </div>
+
+            <!-- Formulário de Cadastro -->
+            <div id="signup-form" class="auth-form">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Crie sua Conta</h2>
+                <p class="text-slate-500 mb-6">É rápido e fácil.</p>
+                <div class="space-y-4 text-left">
+                    <input type="email" id="signup-email" placeholder="Seu e-mail" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <div class="relative">
+                        <input type="password" id="signup-password" placeholder="Crie uma senha (mín. 6 caracteres)" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <button class="toggle-password absolute inset-y-0 right-0 px-3 flex items-center text-gray-500">
+                            <svg class="h-5 w-5 eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                            <svg class="h-5 w-5 eye-closed hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 .946-3.11 3.563-5.518 6.814-6.166M9 9a3 3 0 116 0 3 3 0 01-6 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 2l20 20" /></svg>
+                        </button>
+                    </div>
+                </div>
+                <button id="signup-btn" class="mt-6 w-full bg-orange-600 text-white font-bold py-3 rounded-lg hover:bg-orange-700 transition-all">Cadastrar</button>
+                <p class="text-sm text-slate-500 mt-4">Já tem uma conta? <a href="#" id="show-login-from-signup" class="font-semibold text-orange-600 hover:underline">Faça login</a></p>
+            </div>
+
+            <!-- Formulário de Esqueci a Senha -->
+            <div id="forgot-password-form" class="auth-form">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Recuperar Senha</h2>
+                <p class="text-slate-500 mb-6">Enviaremos um link para seu e-mail.</p>
+                <div class="space-y-4 text-left">
+                    <input type="email" id="reset-email" placeholder="Seu e-mail de cadastro" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500">
+                </div>
+                <button id="reset-password-btn" class="mt-6 w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition-all">Enviar E-mail</button>
+                 <p class="text-sm text-slate-500 mt-4">Lembrou a senha? <a href="#" id="back-to-login" class="font-semibold text-green-600 hover:underline">Voltar para o login</a></p>
+            </div>
+            <p id="auth-feedback" class="text-sm mt-4 h-4"></p>
+        </div>
+    </div>
+
+    <!-- Modal de Configuração Diária -->
+    <div id="configModal" class="hidden fixed inset-0 z-40 flex items-start sm:items-center justify-center p-2 sm:p-4 modal-backdrop overflow-y-auto">
+        <div class="bg-gradient-to-br from-amber-50 to-orange-100 rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 w-full max-w-2xl text-center transform transition-all scale-95 opacity-0 my-8" id="modalContent">
+            <div class="superacao-icon flex justify-center mx-auto mb-4">
+                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="1.5" class="stroke-orange-600">
+                    <path d="M4.5 19.5L8 16l3.5-3 4 2.5 4-3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19.5 4.5l-3 4-1.5-1-3 2-3.5-2-4 3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="8.5" cy="11.5" r="1.5" stroke="currentColor" fill="currentColor"/>
+                    <path d="M8.5 11.5V9.5a1 1 0 011-1h.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M15.5 11.5v-2a1 1 0 00-1-1h-.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h1 id="greeting" class="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 mb-1">Carregando...</h1>
+            <p id="currentDate" class="text-slate-600 mb-6 text-base sm:text-lg">Hoje é ...</p>
+            <div class="space-y-5">
+                <div>
+                    <h3 class="text-base sm:text-lg font-semibold mb-3 text-slate-700">Qual o seu turno de serviço hoje?</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 custom-radio">
+                        <div>
+                            <input type="radio" id="turno1" name="turno" value="primeiro">
+                            <label for="turno1" class="block p-3 sm:p-4 rounded-lg cursor-pointer font-medium text-sm sm:text-base text-slate-700">☀️ Primeiro Horário <span class="block text-xs sm:text-sm font-normal">(Início às 08:00)</span></label>
+                        </div>
+                        <div>
+                            <input type="radio" id="turno2" name="turno" value="segundo">
+                            <label for="turno2" class="block p-3 sm:p-4 rounded-lg cursor-pointer font-medium text-sm sm:text-base text-slate-700">🌙 Segundo Horário <span class="block text-xs sm:text-sm font-normal">(Início às 11:00)</span></label>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-base sm:text-lg font-semibold mb-3 text-slate-700">Quais postos estarão ativos?</h3>
+                    <div id="postosGrid" class="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3 custom-checkbox"></div>
+                    <div class="mt-4 flex items-center justify-center custom-checkbox">
+                        <input type="checkbox" id="desativar3e4"><label for="desativar3e4" class="px-3 py-2 rounded-lg cursor-pointer text-xs sm:text-sm font-medium">Ativar Postos 03 e 04</label>
+                    </div>
+                </div>
+            </div>
+            <button id="iniciarEstudosBtn" disabled class="mt-8 w-full bg-orange-600 text-white font-bold py-3 sm:py-4 rounded-lg text-base sm:text-lg transition-all duration-300 hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none hover:scale-105">Iniciar Estudos</button>
+        </div>
+    </div>
+
+    <!-- Interface Principal -->
+    <div id="mainApp" class="hidden container mx-auto p-4 md:p-8">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 pb-6 border-b border-gray-200/80">
+            <div class="text-center md:text-left">
+                <h1 class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-slate-800 to-sky-700 bg-clip-text text-transparent pb-2">Seu Plano de Estudos</h1>
+                <p id="headerDate" class="text-slate-500 mt-1 text-base sm:text-lg"></p>
+            </div>
+            <div class="flex items-center gap-4 mt-4 md:mt-0">
+                 <p id="user-email" class="text-sm text-slate-600 hidden font-medium"></p>
+                 <button id="reconfigurarDiaBtn" class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg shadow-sm hover:bg-gray-100 transition-all">Configurar Dia</button>
+                 <button id="logout-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-red-600 transition-all">Sair</button>
+            </div>
+        </header>
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <section class="lg:col-span-2">
+                <h2 class="text-2xl font-bold mb-4 text-slate-700">Sessões de Estudo de Hoje</h2>
+                <div id="sessoesContainer" class="space-y-4"></div>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold mb-4 text-slate-700">Progresso Geral</h2>
+                <div id="progressoContainer" class="space-y-4"></div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Custom JS File -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
+
+
