@@ -151,7 +151,6 @@
                 <h1 class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-slate-800 to-sky-700 bg-clip-text text-transparent pb-2">Seu Plano de Estudos</h1>
                 <p id="headerDate" class="text-slate-500 mt-1 text-base sm:text-lg"></p>
             </div>
-            <!-- FIX: Container de usuário responsivo -->
             <div class="flex flex-col sm:flex-row items-center justify-center md:justify-end gap-2 sm:gap-4 w-full md:w-auto">
                  <p id="user-email" class="text-sm text-slate-600 hidden font-medium truncate max-w-[200px] sm:max-w-xs" title=""></p>
                  <div class="flex items-center gap-2 flex-shrink-0">
@@ -175,7 +174,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO E VARIÁVEIS GLOBAIS ---
         const firebaseConfig = {
@@ -200,7 +199,7 @@
         let userProgress = {};
         let dailyConfig = null;
         let unsubscribeProgress = null;
-        let isInitialLoad = true;
+        let isHandlingAuth = false;
 
         const disciplinasData = {
             "Língua Portuguesa": { icon: "📚", color: "bg-blue-100", textColor: "text-blue-800", borderColor: "border-blue-400", topics: ["Interpretação de texto", "Ortografia oficial", "Acentuação gráfica", "Pontuação", "Classes de palavras", "Vozes verbais", "Concordância verbal e nominal", "Regência verbal e nominal", "Sintaxe: coordenação e subordinação", "Ocorrência de crase", "Sinônimos e antônimos", "Sentido próprio e figurado das palavras", "Reorganização de orações e períodos", "Redação (reconhecimento de frases corretas)"] },
@@ -212,7 +211,7 @@
             "Economia": { icon: "📈", color: "bg-lime-100", textColor: "text-lime-800", borderColor: "border-lime-400", topics: ["Conceitos fundamentais de economia", "Teoria elementar de equilíbrio do mercado", "Fatores de oferta e procura", "Efeitos de deslocamentos das curvas", "Elasticidades-preço da procura e da oferta", "Equilíbrio da firma em diferentes mercados", "A necessidade econômica da tributação", "Classificação dos impostos", "Tributação e eficiência (Peso Morto)", "Tributação Ótima (Regra de Ramsey)", "Curva de Laffer", "Tributação e equidade (Trade-off)", "Incidência econômica dos tributos", "Tributação em concorrência perfeita e monopólio", "Política tributária e decisões de consumo", "Macroeconomia: Fluxo Circular da Renda", "Agregados macroeconômicos (PIB, Consumo)", "Determinação do produto de equilíbrio (Curva IS)", "Política monetária (Curva LM)", "PIB real vs. PIB nominal", "Inflação: conceitos e mensuração", "Contas nacionais do Brasil", "Balanço de Pagamentos", "Noções sobre economia do setor público", "Políticas fiscal, monetária e cambial", "Efeitos da atuação do Estado na economia", "Sistema Tributário como instrumento de distribuição"] },
             "Contabilidade Geral": { icon: "🧾", color: "bg-green-100", textColor: "text-green-800", borderColor: "border-green-400", topics: ["Conceito, objeto e objetivos da Contabilidade", "Princípios e Normas Brasileiras de Contabilidade", "Itens patrimoniais: Ativo, Passivo e PL", "Classificação e avaliação de itens patrimoniais", "Regime de Competência e Apuração do resultado", "Estoques: Tipos, Critérios e Métodos de avaliação", "Ativo Imobilizado: Mensuração e Depreciação", "Ativo Intangível: Mensuração e Amortização", "Redução ao valor recuperável (Impairment)", "Estimativa de perdas e Provisões (Contingências)", "Balanço Patrimonial (Estrutura)", "Demonstração do Resultado do Exercício (DRE)", "DMPL e DLPA"] },
             "Realidade de Goiás": { icon: "🗺️", color: "bg-emerald-100", textColor: "text-emerald-800", borderColor: "border-emerald-400", topics: ["Formação econômica de Goiás (mineração, agropecuária)", "Modernização da economia goiana (Estrada de Ferro, Goiânia, Brasília)", "Modernização da agricultura e urbanização", "População goiana: movimentos migratórios", "Economia goiana: industrialização e infraestrutura", "Regiões goianas e desigualdades regionais", "Aspectos físicos do território goiano", "História política de Goiás", "História social de Goiás", "Atualidades econômicas, políticas e sociais"] },
-            "Tecnologias da Informação": { icon: "💻", color: "bg-teal-100", textColor: "text-teal-800", borderColor: "border-teal-400", topics: ["Fundamentos de Banco de Dados (SQL, T-SQL, PL/SQL)", "Modelagem de dados: relacional e multidimensional", "Administração de banco de dados relacionais", "Pipeline de Dados (ETL, ELT)", "OLAP: Conceitos e aplicações", "Modelagem e Otimização de Bases Multimensionais", "Pré-processamento de Dados", "Data Lake: Conceito e aplicações", "Data Mining e Data Warehouse", "Big Data: Conceitos e premissas", "Bancos de Dados Não Relacionais (NoSQL)", "Gerenciamento de Projetos (PMBOK 7ª edição)", "Metodologias Ágeis (Scrum, Kanban, Lean, XP)", "Análise de Agrupamentos (Clusterização)", "Análise Fatorial por Componentes Principais", "Análise de Correspondência (Simples e Múltipla)", "Modelos Lineares de Regressão", "Modelos de Regressão Logística", "Modelos de Regressão para Dados de Contagem", "Redes Neurais Artificiais e Machine Learning", "Visualização e Análise Exploratória de Dados", "Business Intelligence ( dashboards, Power BI)", "Séries Temporais (Sazonalidade, Tendência, ARIMA)"] },
+            "Tecnologias da Informação": { icon: "💻", color: "bg-teal-100", textColor: "text-teal-800", borderColor: "border-teal-400", topics: ["Fundamentos de Banco de Dados (SQL, T-SQL, PL/SQL)", "Modelagem de dados: relacional e multidimensional", "Administração de banco de dados relacionais", "Pipeline de Dados (ETL, ELT)", "OLAP: Conceitos e aplicações", "Modelagem e Otimização de Bases Multidimensionais", "Pré-processamento de Dados", "Data Lake: Conceito e aplicações", "Data Mining e Data Warehouse", "Big Data: Conceitos e premissas", "Bancos de Dados Não Relacionais (NoSQL)", "Gerenciamento de Projetos (PMBOK 7ª edição)", "Metodologias Ágeis (Scrum, Kanban, Lean, XP)", "Análise de Agrupamentos (Clusterização)", "Análise Fatorial por Componentes Principais", "Análise de Correspondência (Simples e Múltipla)", "Modelos Lineares de Regressão", "Modelos de Regressão Logística", "Modelos de Regressão para Dados de Contagem", "Redes Neurais Artificiais e Machine Learning", "Visualização e Análise Exploratória de Dados", "Business Intelligence ( dashboards, Power BI)", "Séries Temporais (Sazonalidade, Tendência, ARIMA)"] },
             "Auditoria": { icon: "🔍", color: "bg-cyan-100", textColor: "text-cyan-800", borderColor: "border-cyan-400", topics: ["Planejamento de Auditoria", "Amostragem em Auditoria", "Testes de observância (ou de controles)", "Testes substantivos", "Testes para subavaliação e superavaliação", "Evidências de auditoria e Procedimentos", "Identificação de fraudes na escrita contábil", "Auditoria no ativo circulante", "Recomposição contábil do fluxo de caixa", "Auditoria nas contas de resultado", "Irregularidades (Ocultação de ativos, Saldo credor de caixa)", "Suprimento de caixa sem comprovação", "Aquisições não contabilizadas", "Falta de registro de passivos", "Superavaliação de custos", "Estrutura da EFD ICMS/IPI e XML da NF-e", "Relacionamento entre registros (EFD e NF-e)", "Normas Brasileiras de Auditoria (NBC TA e NBC PA)"] },
             "Contabilidade Avançada e de Custos": { icon: "📊", color: "bg-sky-100", textColor: "text-sky-800", borderColor: "border-sky-400", topics: ["Políticas Contábeis, Mudança de Estimativa e Retificação de Erro", "Mensuração a Valor Justo", "Ajuste a Valor Presente", "Instrumentos financeiros", "Propriedade para Investimento", "Operações de arrendamento mercantil", "Participações Societárias (Coligadas, Controladas, MEP)", "Reorganização de empresas (Incorporação, fusão, cisão)", "Mais valia, Goodwill e Deságio", "Subvenção e Assistência governamentais", "Conversão de demonstrações contábeis (Câmbio)", "Demonstração dos Fluxos de Caixa (DFC)", "Demonstração do Valor Adicionado (DVA)", "Conceitos e terminologia de Custos", "Classificação e apropriação dos custos", "Departamentalização", "Sistemas de Custeio (Absorção, Variável, ABC)", "Produção (Ordem, Contínua, Conjunta)", "Custos Estimados e Custo Padrão", "Análise Custo x Volume x Lucro (Ponto de Equilíbrio)", "Margem de Contribuição e Alavancagem Operacional"] },
             "Direito Tributário I": { icon: "⚖️", color: "bg-purple-100", textColor: "text-purple-800", borderColor: "border-purple-400", topics: ["Sistema Tributário Nacional na CF", "Princípios constitucionais tributários", "Espécies tributárias", "Limitações ao Poder de Tributar (Imunidades)", "Impostos da União", "Impostos dos Estados e DF", "Impostos dos Municípios", "Repartição das Receitas Tributárias", "CTN: Competência e Legisolação Tributária", "Obrigação Tributária: Fato Gerador e Sujeitos", "Responsabilidade Tributária (Sucessores, Terceiros)", "Crédito Tributário: Lançamento", "Suspensão da exigibilidade do Crédito", "Extinção do Crédito Tributário", "Exclusão do Crédito (Isenção, Anistia)", "Garantias e Privilégios do Crédito", "Administração Tributária (Fiscalização, Dívida Ativa)", "LC 24/1975 (Convênios ICMS)", "LC 87/1996 (Lei Kandir)", "LC 105/2001 (Sigilo Bancário)", "LC 116/2003 (ISS)", "LC 123/2006 (Simples Nacional)", "LC 192/2022 (ICMS Combustíveis)", "Súmulas Vinculantes do STF em matéria tributária"] },
@@ -228,18 +227,27 @@
         const authFeedback = document.getElementById('auth-feedback');
         
         // --- AUTENTICAÇÃO E DADOS ---
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
+            if (isHandlingAuth) return;
+            isHandlingAuth = true;
+
             if (user) {
-                if (userId === user.uid) return; // Evita recarregamento desnecessário
+                if (userId === user.uid) {
+                    isHandlingAuth = false;
+                    return; 
+                }
                 userId = user.uid;
                 hideAuthModal();
                 showLoading();
-                isInitialLoad = true; // Reseta para a lógica de carregamento inicial
+
                 const userEmailEl = document.getElementById('user-email');
                 userEmailEl.textContent = user.email;
                 userEmailEl.title = user.email;
                 userEmailEl.classList.remove('hidden');
-                loadAndListenForProgress(userId);
+
+                await initializeUserProgress(userId);
+                setupProgressListener(userId);
+
             } else {
                 userId = null;
                 if (unsubscribeProgress) {
@@ -253,49 +261,48 @@
                 hideLoading();
                 showAuthModal();
             }
+            isHandlingAuth = false;
         });
         
-        // FIX: Lógica de carregamento de progresso à prova de falhas
-        const loadAndListenForProgress = (uid) => {
-            if (!uid) {
-                hideLoading();
-                return;
-            }
-            if (unsubscribeProgress) unsubscribeProgress();
-
+        // FIX: Lógica de inicialização rápida e segura
+        const initializeUserProgress = async (uid) => {
             const progressRef = doc(db, 'artifacts', appId, 'users', uid);
-
-            unsubscribeProgress = onSnapshot(progressRef, (docSnap) => {
+            try {
+                const docSnap = await getDoc(progressRef);
                 if (docSnap.exists() && docSnap.data().progress) {
                     userProgress = docSnap.data().progress;
                 } else {
-                    // Se o documento não existe, cria um em memória e salva no banco.
-                    // A UI não espera o salvamento para ser exibida.
                     console.log("Documento de progresso não encontrado, criando novo.");
                     const initialProgress = {};
                     Object.keys(disciplinasData).forEach(d => initialProgress[d] = 0);
                     userProgress = initialProgress;
-                    // Salva em segundo plano
-                    setDoc(progressRef, { progress: initialProgress }).catch(err => console.error("Falha ao criar progresso inicial:", err));
+                    await setDoc(progressRef, { progress: initialProgress });
                 }
+            } catch (error) {
+                console.error("Erro ao inicializar progresso:", error);
+                // Define um progresso local para a app não quebrar
+                const initialProgress = {};
+                Object.keys(disciplinasData).forEach(d => initialProgress[d] = 0);
+                userProgress = initialProgress;
+            } finally {
+                initializeAppState();
+            }
+        };
 
-                // Apenas na primeira vez que os dados são recebidos (após login),
-                // decide qual tela mostrar e esconde o loader.
-                if (isInitialLoad) {
-                    initializeAppState();
-                    isInitialLoad = false; // Impede que a lógica se repita
-                } else {
-                    // Para atualizações subsequentes (concluir tópico), apenas redesenha os componentes.
+        const setupProgressListener = (uid) => {
+            if (unsubscribeProgress) unsubscribeProgress();
+            const progressRef = doc(db, 'artifacts', appId, 'users', uid);
+            unsubscribeProgress = onSnapshot(progressRef, (docSnap) => {
+                if (docSnap.exists() && docSnap.data().progress) {
+                    userProgress = docSnap.data().progress;
+                    // Simplesmente redesenha os componentes com os dados atualizados
                     renderGeneralProgress();
                     if (dailyConfig && dailyConfig.plan) {
                         renderStudySessions(dailyConfig.plan);
                     }
                 }
             }, (error) => {
-                console.error("Erro crítico no listener do Firestore:", error);
-                hideLoading(); // Garante que o usuário não fique preso
-                setFeedback("Não foi possível carregar seus dados.", "error");
-                signOut(auth); // Desloga para segurança e para o usuário tentar novamente
+                console.error("Erro no listener do Firestore:", error);
             });
         };
 
@@ -338,12 +345,47 @@
         const handleCompleteTopic = (e) => { const { disciplina, topicIndex } = e.target.dataset; const topicIndexInt = parseInt(topicIndex, 10); if ((userProgress[disciplina] || 0) === topicIndexInt) { const newProgress = { ...userProgress }; newProgress[disciplina] = (newProgress[disciplina] || 0) + 1; saveProgress(newProgress); } };
         const handleUndoTopic = (e) => { const { disciplina, topicIndex } = e.target.dataset; const topicIndexInt = parseInt(topicIndex, 10); if (userProgress[disciplina] === topicIndexInt + 1) { const newProgress = { ...userProgress }; newProgress[disciplina]--; saveProgress(newProgress); }};
         const highlightCurrentSession = () => { document.querySelectorAll('.current-session-highlight').forEach(el => el.classList.remove('current-session-highlight')); const now = new Date(); const currentTime = now.getHours() * 60 + now.getMinutes(); let nextSessionEl = null; let foundCurrent = false; if (dailyConfig && dailyConfig.plan) { for (const sessao of dailyConfig.plan) { const [start] = sessao.horario.split(' - '); const [startHour] = start.split(':').map(Number); const sessionStart = startHour * 60; const sessionEnd = sessionStart + (3 * 60); const sessionEl = Array.from(document.querySelectorAll('.sessao-card')).find(el => el.querySelector('p').textContent.includes(sessao.topico)); if (!sessionEl) continue; if (currentTime >= sessionStart && currentTime < sessionEnd) { sessionEl.classList.add('current-session-highlight'); sessionEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); foundCurrent = true; break; } else if (currentTime < sessionStart && !nextSessionEl) { nextSessionEl = sessionEl; } } if (!foundCurrent && nextSessionEl) { nextSessionEl.classList.add('current-session-highlight'); nextSessionEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } } setTimeout(highlightCurrentSession, 60000); };
-        const renderGeneralProgress = () => { const container = document.getElementById('progressoContainer'); let totalTopics = 0; let completedTopics = 0; const disciplinesHTML = Object.entries(disciplinasData).map(([name, data]) => { const total = data.topics.length; const completed = userProgress[name] || 0; const percentage = total > 0 ? Math.round((completed / total) * 100) : 0; totalTopics += total; completedTopics += completed; return `<div class="accordion-item bg-white/70 backdrop-blur-sm rounded-lg shadow-md overflow-hidden"><div class="accordion-header flex justify-between items-center p-3 cursor-pointer" data-target="#content-${name.replace(/[^a-zA-Z0-9]/g, '')}"><div class="flex items-center space-x-3"><span class="text-lg">${data.icon}</span><span class="font-semibold text-sm text-slate-700 flex-1">${name}</span></div><div class="flex items-center space-x-2"><span class="text-xs font-bold ${data.textColor}">${percentage}%</span><svg class="arrow-icon h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div></div><div class="progress-bar h-1.5 ${data.color} w-full"><div class="progress-bar-inner h-full ${data.color.replace('100', '500')}" style="width: ${percentage}%;"></div></div><div id="content-${name.replace(/[^a-zA-Z0-9]/g, '')}" class="accordion-content"><ul class="text-xs text-slate-600 space-y-1 py-2">${data.topics.map((topic, index) => `<li class="flex items-start gap-2 ${index < completed ? 'line-through text-slate-400' : ''}"><span class="mt-0.5">${index < completed ? '✅' : '▪️'}</span><span>${index + 1}. ${topic}</span></li>`).join('')}</ul></div></div>`; }).join(''); const totalPercentage = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0; const summaryHTML = `<div class="bg-gradient-to-br from-sky-500 to-blue-600 text-white p-6 rounded-xl shadow-xl text-center"><h3 class="text-lg font-bold">Progresso Total</h3><div class="text-5xl font-extrabold my-2">${totalPercentage}%</div><p class="text-sm opacity-90">${completedTopics} de ${totalTopics} tópicos concluídos.</p></div>`; container.innerHTML = summaryHTML; };
+        
+        const renderGeneralProgress = () => {
+            const container = document.getElementById('progressoContainer');
+            if (!container) return; // Adiciona guarda para evitar erros
+            let totalTopics = 0;
+            let completedTopics = 0;
+            const disciplinesHTML = Object.entries(disciplinasData).map(([name, data]) => {
+                const total = data.topics.length;
+                const completed = userProgress[name] || 0;
+                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+                totalTopics += total;
+                completedTopics += completed;
+                return `<div class="accordion-item bg-white/70 backdrop-blur-sm rounded-lg shadow-md overflow-hidden">
+                    <div class="accordion-header flex justify-between items-center p-3 cursor-pointer" data-target="#content-${name.replace(/[^a-zA-Z0-9]/g, '')}">
+                        <div class="flex items-center space-x-3"><span class="text-lg">${data.icon}</span><span class="font-semibold text-sm text-slate-700 flex-1">${name}</span></div>
+                        <div class="flex items-center space-x-2"><span class="text-xs font-bold ${data.textColor}">${percentage}%</span><svg class="arrow-icon h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>
+                    </div>
+                    <div class="progress-bar h-1.5 ${data.color} w-full"><div class="progress-bar-inner h-full ${data.color.replace('100', '500')}" style="width: ${percentage}%;"></div></div>
+                    <div id="content-${name.replace(/[^a-zA-Z0-9]/g, '')}" class="accordion-content"><ul class="text-xs text-slate-600 space-y-1 py-2">${data.topics.map((topic, index) => `<li class="flex items-start gap-2 ${index < completed ? 'line-through text-slate-400' : ''}"><span class="mt-0.5">${index < completed ? '✅' : '▪️'}</span><span>${index + 1}. ${topic}</span></li>`).join('')}</ul></div>
+                </div>`;
+            }).join('');
+            const totalPercentage = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+            const summaryHTML = `<div class="bg-gradient-to-br from-sky-500 to-blue-600 text-white p-6 rounded-xl shadow-xl text-center"><h3 class="text-lg font-bold">Progresso Total</h3><div class="text-5xl font-extrabold my-2">${totalPercentage}%</div><p class="text-sm opacity-90">${completedTopics} de ${totalTopics} tópicos concluídos.</p></div>`;
+            container.innerHTML = summaryHTML + disciplinesHTML; // FIX: Garante que ambos são renderizados
+        };
 
         // --- LÓGICA DE AUTENTICAÇÃO ---
+        const createInitialProgressForNewUser = async (uid) => {
+            const progressRef = doc(db, 'artifacts', appId, 'users', uid);
+            const initialProgress = {};
+            Object.keys(disciplinasData).forEach(d => initialProgress[d] = 0);
+            try {
+                await setDoc(progressRef, { progress: initialProgress });
+            } catch (error) {
+                console.error("Falha ao criar progresso inicial para novo usuário:", error);
+            }
+        };
+
         const setFeedback = (message, type) => { authFeedback.textContent = message; authFeedback.className = `text-sm mt-4 h-4 ${type === 'error' ? 'text-red-500' : 'text-green-500'}`; };
         const handleLogin = () => { const email = document.getElementById('login-email').value; const password = document.getElementById('login-password').value; if (!email || !password) { setFeedback('Por favor, preencha e-mail e senha.', 'error'); return; } setFeedback('Entrando...', 'info'); signInWithEmailAndPassword(auth, email, password).catch(error => setFeedback(error.code === 'auth/invalid-credential' ? 'E-mail ou senha inválidos.' : 'Erro ao fazer login.', 'error')); };
-        const handleSignup = () => { const email = document.getElementById('signup-email').value; const password = document.getElementById('signup-password').value; if (password.length < 6) { setFeedback('A senha deve ter no mínimo 6 caracteres.', 'error'); return; } setFeedback('Criando conta...', 'info'); createUserWithEmailAndPassword(auth, email, password).catch(error => { console.error("Erro no cadastro:", error); let message = 'Ocorreu um erro ao criar a conta.'; if (error.code === 'auth/email-already-in-use') { message = 'Este e-mail já está em uso.'; } else if (error.code === 'auth/invalid-email') { message = 'O formato do e-mail é inválido.'; } setFeedback(message, 'error'); }); };
+        const handleSignup = () => { const email = document.getElementById('signup-email').value; const password = document.getElementById('signup-password').value; if (password.length < 6) { setFeedback('A senha deve ter no mínimo 6 caracteres.', 'error'); return; } setFeedback('Criando conta...', 'info'); createUserWithEmailAndPassword(auth, email, password).then(userCredential => { createInitialProgressForNewUser(userCredential.user.uid); }).catch(error => { console.error("Erro no cadastro:", error); let message = 'Ocorreu um erro ao criar a conta.'; if (error.code === 'auth/email-already-in-use') { message = 'Este e-mail já está em uso.'; } else if (error.code === 'auth/invalid-email') { message = 'O formato do e-mail é inválido.'; } setFeedback(message, 'error'); }); };
         const handlePasswordReset = () => { const email = document.getElementById('reset-email').value; if(!email) { setFeedback('Por favor, insira seu e-mail.', 'error'); return; } setFeedback('Enviando e-mail...', 'info'); sendPasswordResetEmail(auth, email).then(() => setFeedback('E-mail de recuperação enviado!', 'success')).catch(error => setFeedback('Erro ao enviar e-mail.', 'error')); };
         const handleLogout = () => { signOut(auth).catch(error => console.error("Erro ao sair:", error)); };
         const switchAuthForm = (formId) => { document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active')); document.getElementById(formId).classList.add('active'); setFeedback('', 'info'); };
