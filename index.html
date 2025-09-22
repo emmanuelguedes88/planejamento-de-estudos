@@ -172,18 +172,21 @@
     </div>
     
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Importações do Firebase SDK (versão atualizada)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO E VARIÁVEIS GLOBAIS ---
+        // NOVA CONFIGURAÇÃO DO FIREBASE (planner2-813b2) INSERIDA AQUI
         const firebaseConfig = {
-            apiKey: "AIzaSyDiHIK0iSGqJ7eDPpgIs4VFrD3jIU0_A-0",
-            authDomain: "plano-de-estudo-a62c3.firebaseapp.com",
-            projectId: "plano-de-estudo-a62c3",
-            storageBucket: "plano-de-estudo-a62c3.appspot.com",
-            messagingSenderId: "360422879546",
-            appId: "1:360422879546:web:a0d858d7fc1fec634ae003"
+            apiKey: "AIzaSyApwaG2V1Sm4ngUuWibqS3e8BJkD5qFRZk",
+            authDomain: "planner2-813b2.firebaseapp.com",
+            projectId: "planner2-813b2",
+            storageBucket: "planner2-813b2.firebasestorage.app",
+            messagingSenderId: "171560326149",
+            appId: "1:171560326149:web:eaf7bc39915088c4a2f86c",
+            measurementId: "G-08HKD0VRM0"
         };
         
         const finalFirebaseConfig = typeof __firebase_config !== 'undefined' 
@@ -193,7 +196,8 @@
         const app = initializeApp(finalFirebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'plano-de-estudos-ultra';
+        // Usando o novo projectId como fallback para o appId
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'planner2-813b2';
 
         let userId = null;
         let userProgress = {};
@@ -264,7 +268,6 @@
             isHandlingAuth = false;
         });
         
-        // FIX: Lógica de inicialização rápida e segura
         const initializeUserProgress = async (uid) => {
             const progressRef = doc(db, 'artifacts', appId, 'users', uid);
             try {
@@ -273,14 +276,10 @@
                     userProgress = docSnap.data().progress;
                 } else {
                     console.log("Documento de progresso não encontrado, criando novo.");
-                    const initialProgress = {};
-                    Object.keys(disciplinasData).forEach(d => initialProgress[d] = 0);
-                    userProgress = initialProgress;
-                    await setDoc(progressRef, { progress: initialProgress });
+                    await createInitialProgressForNewUser(uid); // Chama a função para criar e definir userProgress
                 }
             } catch (error) {
                 console.error("Erro ao inicializar progresso:", error);
-                // Define um progresso local para a app não quebrar
                 const initialProgress = {};
                 Object.keys(disciplinasData).forEach(d => initialProgress[d] = 0);
                 userProgress = initialProgress;
@@ -295,7 +294,6 @@
             unsubscribeProgress = onSnapshot(progressRef, (docSnap) => {
                 if (docSnap.exists() && docSnap.data().progress) {
                     userProgress = docSnap.data().progress;
-                    // Simplesmente redesenha os componentes com os dados atualizados
                     renderGeneralProgress();
                     if (dailyConfig && dailyConfig.plan) {
                         renderStudySessions(dailyConfig.plan);
@@ -348,7 +346,7 @@
         
         const renderGeneralProgress = () => {
             const container = document.getElementById('progressoContainer');
-            if (!container) return; // Adiciona guarda para evitar erros
+            if (!container) return;
             let totalTopics = 0;
             let completedTopics = 0;
             const disciplinesHTML = Object.entries(disciplinasData).map(([name, data]) => {
@@ -368,7 +366,7 @@
             }).join('');
             const totalPercentage = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
             const summaryHTML = `<div class="bg-gradient-to-br from-sky-500 to-blue-600 text-white p-6 rounded-xl shadow-xl text-center"><h3 class="text-lg font-bold">Progresso Total</h3><div class="text-5xl font-extrabold my-2">${totalPercentage}%</div><p class="text-sm opacity-90">${completedTopics} de ${totalTopics} tópicos concluídos.</p></div>`;
-            container.innerHTML = summaryHTML + disciplinesHTML; // FIX: Garante que ambos são renderizados
+            container.innerHTML = summaryHTML + disciplinesHTML;
         };
 
         // --- LÓGICA DE AUTENTICAÇÃO ---
@@ -376,6 +374,7 @@
             const progressRef = doc(db, 'artifacts', appId, 'users', uid);
             const initialProgress = {};
             Object.keys(disciplinasData).forEach(d => initialProgress[d] = 0);
+            userProgress = initialProgress; // Define o progresso local imediatamente
             try {
                 await setDoc(progressRef, { progress: initialProgress });
             } catch (error) {
