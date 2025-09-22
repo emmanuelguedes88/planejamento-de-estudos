@@ -28,10 +28,27 @@
         .accordion-header.open .arrow-icon { transform: rotate(180deg); }
         .auth-form { display: none; }
         .auth-form.active { display: block; }
+        .loader {
+            border: 5px solid #f3f3f3; /* Light grey */
+            border-top: 5px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800 bg-gradient-to-br from-gray-50 to-blue-100 min-h-screen">
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+        <div class="loader"></div>
+    </div>
+    
     <!-- Auth Modal -->
     <div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
         <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center transform transition-all scale-95 opacity-0" id="authContent">
@@ -130,13 +147,14 @@
     <!-- Interface Principal -->
     <div id="mainApp" class="hidden container mx-auto p-4 md:p-8">
         <header class="flex flex-col md:flex-row justify-between items-center mb-8 pb-6 border-b border-gray-200/80">
-            <div class="text-center md:text-left">
+            <div class="text-center md:text-left mb-4 md:mb-0">
                 <h1 class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-slate-800 to-sky-700 bg-clip-text text-transparent pb-2">Seu Plano de Estudos</h1>
                 <p id="headerDate" class="text-slate-500 mt-1 text-base sm:text-lg"></p>
             </div>
-            <div class="flex items-center gap-4 mt-4 md:mt-0">
-                 <p id="user-email" class="text-sm text-slate-600 hidden font-medium"></p>
-                 <button id="reconfigurarDiaBtn" class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg shadow-sm hover:bg-gray-100 transition-all">Configurar Dia</button>
+            <!-- FIX: Container for user info and buttons to align them correctly -->
+            <div class="flex items-center gap-4">
+                 <p id="user-email" class="text-sm text-slate-600 hidden font-medium truncate" title=""></p>
+                 <button id="reconfigurarDiaBtn" class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg shadow-sm hover:bg-gray-100 transition-all whitespace-nowrap">Configurar Dia</button>
                  <button id="logout-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-red-600 transition-all">Sair</button>
             </div>
         </header>
@@ -155,10 +173,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO E VARIÁVEIS GLOBAIS ---
-        // Suas credenciais do Firebase.
         const firebaseConfig = {
             apiKey: "AIzaSyDiHIK0iSGqJ7eDPpgIs4VFrD3jIU0_A-0",
             authDomain: "plano-de-estudo-a62c3.firebaseapp.com",
@@ -181,6 +198,7 @@
         let userProgress = {};
         let dailyConfig = null;
         let unsubscribeProgress = null;
+        let isInitialLoad = true;
 
         const disciplinasData = {
             "Língua Portuguesa": { icon: "📚", color: "bg-blue-100", textColor: "text-blue-800", borderColor: "border-blue-400", topics: ["Interpretação de texto", "Ortografia oficial", "Acentuação gráfica", "Pontuação", "Classes de palavras", "Vozes verbais", "Concordância verbal e nominal", "Regência verbal e nominal", "Sintaxe: coordenação e subordinação", "Ocorrência de crase", "Sinônimos e antônimos", "Sentido próprio e figurado das palavras", "Reorganização de orações e períodos", "Redação (reconhecimento de frases corretas)"] },
@@ -200,27 +218,33 @@
             "Legislação Tributária Estadual": { icon: "🇬🇴", color: "bg-pink-100", textColor: "text-pink-800", borderColor: "border-pink-400", topics: ["Código Tributário de Goiás (Lei 11.651/91)", "Regulamento do CTE (Decreto 4.852/97)", "Processo Administrativo Tributário (Lei 16.469/09)", "Substituição Tributária (Anexo VIII do RCTE)", "Benefícios Fiscais (Anexo IX do RCTE)", "Obrigações Acessórias (Anexo XII do RCTE)", "DIFAL a não contribuinte (Anexo XV do RCTE)", "Informações de Meios de Pagamento (Anexo XVIII)", "Ajuste SINIEF 07/05 (NF-e)", "Ajuste SINIEF 19/16 (NFC-e)", "Ajuste SINIEF 21/10 (MDF-e)", "ProGoiás (Lei 20.787/2020)", "FUNDEINFRA (Lei 21.670/22)", "Autorregularização (IN 199/2022-SRE)", "Código de Direitos do Contribuinte (LC 104/13)", "FOMENTAR (Lei 9.489/84)", "Alterações FOMENTAR (Lei 11.180/90)", "PRODUZIR e FUNPRODUZIR (Lei 13.591/2000)"] }
         };
 
+        const loadingOverlay = document.getElementById('loadingOverlay');
         const authModal = document.getElementById('authModal');
         const authContent = document.getElementById('authContent');
         const configModal = document.getElementById('configModal');
         const mainApp = document.getElementById('mainApp');
         const authFeedback = document.getElementById('auth-feedback');
-
+        
         // --- AUTENTICAÇÃO E DADOS ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 userId = user.uid;
-                document.getElementById('user-email').textContent = user.email;
-                document.getElementById('user-email').classList.remove('hidden');
                 hideAuthModal();
+                showLoading();
+                const userEmailEl = document.getElementById('user-email');
+                userEmailEl.textContent = user.email;
+                userEmailEl.title = user.email; // Tooltip for long emails
+                userEmailEl.classList.remove('hidden');
                 loadAndListenForProgress(userId);
             } else {
                 userId = null;
-                if(unsubscribeProgress) unsubscribeProgress();
+                if (unsubscribeProgress) unsubscribeProgress();
                 userProgress = {};
                 dailyConfig = null;
+                isInitialLoad = true; // Reset for next login
                 mainApp.classList.add('hidden');
                 document.getElementById('user-email').classList.add('hidden');
+                hideLoading();
                 showAuthModal();
             }
         });
@@ -228,30 +252,63 @@
         const loadAndListenForProgress = (uid) => {
             if (!uid) return;
             if (unsubscribeProgress) unsubscribeProgress();
+            
             const progressRef = doc(db, 'artifacts', appId, 'users', uid);
             unsubscribeProgress = onSnapshot(progressRef, async (docSnap) => {
                 if (docSnap.exists() && docSnap.data().progress) {
                     userProgress = docSnap.data().progress;
                 } else {
+                    console.log("Documento de progresso não encontrado, criando um novo.");
                     const initialProgress = {};
                     Object.keys(disciplinasData).forEach(d => initialProgress[d] = 0);
-                    await setDoc(progressRef, { progress: initialProgress });
+                    // Não aguarde aqui para não bloquear a UI, a próxima leitura do snapshot pegará os dados
+                    setDoc(progressRef, { progress: initialProgress }); 
                     userProgress = initialProgress;
                 }
-                renderGeneralProgress();
-                initializeAppState();
-            }, error => console.error("Erro ao ouvir progresso:", error));
+
+                if (isInitialLoad) {
+                    initializeAppState();
+                    isInitialLoad = false;
+                } else {
+                    // Subsequent updates only re-render components
+                    renderGeneralProgress();
+                    if (dailyConfig && dailyConfig.plan) {
+                        renderStudySessions(dailyConfig.plan);
+                    }
+                }
+            }, error => {
+                console.error("Erro ao ouvir progresso:", error);
+                hideLoading();
+            });
         };
 
         const saveProgress = async (newProgress) => {
-            if (!userId) return;
+            if (!userId) {
+                console.error("Tentativa de salvar progresso sem userId.");
+                return;
+            }
             const progressRef = doc(db, 'artifacts', appId, 'users', userId);
-            try { await setDoc(progressRef, { progress: newProgress }, { merge: true }); }
-            catch (error) { console.error("Erro ao salvar progresso:", error); }
+            try {
+                await setDoc(progressRef, { progress: newProgress }, { merge: true });
+                console.log("Progresso salvo com sucesso!");
+            } catch (error) {
+                console.error("Erro ao salvar progresso:", error);
+            }
         };
 
         // --- ESTADO DA APLICAÇÃO E UI ---
-        const initializeAppState = () => { loadDailyConfig(); if (dailyConfig && dailyConfig.plan) { showMainApp(); } else { showConfigModal(); } };
+        const initializeAppState = () => { 
+            loadDailyConfig(); 
+            if (dailyConfig && dailyConfig.plan) { 
+                showMainApp(); 
+            } else { 
+                showConfigModal(); 
+            } 
+            hideLoading();
+        };
+
+        const showLoading = () => loadingOverlay.classList.remove('hidden');
+        const hideLoading = () => loadingOverlay.classList.add('hidden');
         const showAuthModal = () => { switchAuthForm('login-form'); authModal.classList.remove('hidden'); authModal.classList.add('flex'); setTimeout(() => authContent.classList.remove('scale-95', 'opacity-0'), 50); };
         const hideAuthModal = () => { authContent.classList.add('scale-95', 'opacity-0'); setTimeout(() => { authModal.classList.add('hidden'); authModal.classList.remove('flex'); }, 200); };
         const showConfigModal = () => { setupModal(); mainApp.classList.add('hidden'); configModal.classList.remove('hidden'); configModal.classList.add('flex'); setTimeout(() => document.getElementById('modalContent').classList.remove('scale-95', 'opacity-0'), 50); };
@@ -260,7 +317,7 @@
         const validateConfig = () => { const turnoSelecionado = document.querySelector('input[name="turno"]:checked'); const postosSelecionados = document.querySelectorAll('.posto-checkbox:checked').length; document.getElementById('iniciarEstudosBtn').disabled = !(turnoSelecionado && postosSelecionados > 0); };
         const handleStartStudies = () => { const turno = document.querySelector('input[name="turno"]:checked').value; const postosAtivos = Array.from(document.querySelectorAll('.posto-checkbox:checked')).map(cb => cb.value); const plan = generateStudyPlan(turno, postosAtivos); dailyConfig = { date: new Date().toLocaleDateString('pt-BR'), turno, postosAtivos, plan }; localStorage.setItem(`dailyConfig_${userId}`, JSON.stringify(dailyConfig)); showMainApp(); };
         const loadDailyConfig = () => { if(!userId) return; const savedConfig = localStorage.getItem(`dailyConfig_${userId}`); if (savedConfig) { const parsedConfig = JSON.parse(savedConfig); if (parsedConfig.date === new Date().toLocaleDateString('pt-BR')) { dailyConfig = parsedConfig; } else { localStorage.removeItem(`dailyConfig_${userId}`); dailyConfig = null; } } };
-        const showMainApp = () => { hideConfigModal(); renderStudySessions(dailyConfig.plan); mainApp.classList.remove('hidden'); document.getElementById('headerDate').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); };
+        const showMainApp = () => { hideConfigModal(); renderGeneralProgress(); renderStudySessions(dailyConfig.plan); mainApp.classList.remove('hidden'); document.getElementById('headerDate').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); };
 
         // --- RENDERIZAÇÃO E LÓGICA DE ESTUDO ---
         const generateStudyPlan = (turno, postosAtivos) => { const horarios = []; let startHour = turno === 'primeiro' ? 8 : 11; for (let i = 0; i < postosAtivos.length; i++) { const endHour = (startHour + 3) % 24; horarios.push(`${String(startHour).padStart(2, '0')}:00 - ${String(endHour).padStart(2, '0')}:00`); startHour = (endHour + 3) % 24; } let plan = []; let tempProgress = { ...userProgress }; for (let i = 0; i < postosAtivos.length; i++) { let availableDisciplines = Object.keys(disciplinasData).filter(name => (tempProgress[name] || 0) < disciplinasData[name].topics.length).map(name => ({ name, progress: tempProgress[name] || 0 })).sort((a, b) => a.progress - b.progress || Math.random() - 0.5); if (availableDisciplines.length === 0) break; const disciplinaName = availableDisciplines[0].name; const disciplina = disciplinasData[disciplinaName]; const currentTopicIndex = tempProgress[disciplinaName] || 0; const topicText = `${currentTopicIndex + 1}. ${disciplina.topics[currentTopicIndex]}`; plan.push({ posto: postosAtivos[i], horario: horarios[i], disciplina: disciplinaName, topico: topicText, topicIndex: currentTopicIndex, ...disciplinasData[disciplinaName] }); tempProgress[disciplinaName] = currentTopicIndex + 1; } return plan; };
@@ -306,5 +363,4 @@
     </script>
 </body>
 </html>
-
 
