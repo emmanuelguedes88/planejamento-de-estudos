@@ -146,16 +146,18 @@
 
     <!-- Interface Principal -->
     <div id="mainApp" class="hidden container mx-auto p-4 md:p-8">
-        <!-- FIX: Header aprimorado para responsividade -->
         <header class="flex flex-col md:flex-row justify-between items-center mb-8 pb-6 border-b border-gray-200/80 gap-4">
-            <div class="text-center md:text-left">
+            <div class="text-center md:text-left flex-shrink-0">
                 <h1 class="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-slate-800 to-sky-700 bg-clip-text text-transparent pb-2">Seu Plano de Estudos</h1>
                 <p id="headerDate" class="text-slate-500 mt-1 text-base sm:text-lg"></p>
             </div>
-            <div class="flex flex-wrap items-center justify-center md:justify-end gap-2 sm:gap-4 w-full md:w-auto">
-                 <p id="user-email" class="w-full text-center md:w-auto text-sm text-slate-600 hidden font-medium truncate" title=""></p>
-                 <button id="reconfigurarDiaBtn" class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg shadow-sm hover:bg-gray-100 transition-all whitespace-nowrap">Configurar Dia</button>
-                 <button id="logout-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-red-600 transition-all">Sair</button>
+            <!-- FIX: Container de usuário responsivo -->
+            <div class="flex flex-col sm:flex-row items-center justify-center md:justify-end gap-2 sm:gap-4 w-full md:w-auto">
+                 <p id="user-email" class="text-sm text-slate-600 hidden font-medium truncate max-w-[200px] sm:max-w-xs" title=""></p>
+                 <div class="flex items-center gap-2 flex-shrink-0">
+                    <button id="reconfigurarDiaBtn" class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-gray-100 transition-all whitespace-nowrap">Configurar Dia</button>
+                    <button id="logout-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-red-600 transition-all">Sair</button>
+                 </div>
             </div>
         </header>
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -173,7 +175,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- CONFIGURAÇÃO E VARIÁVEIS GLOBAIS ---
         const firebaseConfig = {
@@ -210,7 +212,7 @@
             "Economia": { icon: "📈", color: "bg-lime-100", textColor: "text-lime-800", borderColor: "border-lime-400", topics: ["Conceitos fundamentais de economia", "Teoria elementar de equilíbrio do mercado", "Fatores de oferta e procura", "Efeitos de deslocamentos das curvas", "Elasticidades-preço da procura e da oferta", "Equilíbrio da firma em diferentes mercados", "A necessidade econômica da tributação", "Classificação dos impostos", "Tributação e eficiência (Peso Morto)", "Tributação Ótima (Regra de Ramsey)", "Curva de Laffer", "Tributação e equidade (Trade-off)", "Incidência econômica dos tributos", "Tributação em concorrência perfeita e monopólio", "Política tributária e decisões de consumo", "Macroeconomia: Fluxo Circular da Renda", "Agregados macroeconômicos (PIB, Consumo)", "Determinação do produto de equilíbrio (Curva IS)", "Política monetária (Curva LM)", "PIB real vs. PIB nominal", "Inflação: conceitos e mensuração", "Contas nacionais do Brasil", "Balanço de Pagamentos", "Noções sobre economia do setor público", "Políticas fiscal, monetária e cambial", "Efeitos da atuação do Estado na economia", "Sistema Tributário como instrumento de distribuição"] },
             "Contabilidade Geral": { icon: "🧾", color: "bg-green-100", textColor: "text-green-800", borderColor: "border-green-400", topics: ["Conceito, objeto e objetivos da Contabilidade", "Princípios e Normas Brasileiras de Contabilidade", "Itens patrimoniais: Ativo, Passivo e PL", "Classificação e avaliação de itens patrimoniais", "Regime de Competência e Apuração do resultado", "Estoques: Tipos, Critérios e Métodos de avaliação", "Ativo Imobilizado: Mensuração e Depreciação", "Ativo Intangível: Mensuração e Amortização", "Redução ao valor recuperável (Impairment)", "Estimativa de perdas e Provisões (Contingências)", "Balanço Patrimonial (Estrutura)", "Demonstração do Resultado do Exercício (DRE)", "DMPL e DLPA"] },
             "Realidade de Goiás": { icon: "🗺️", color: "bg-emerald-100", textColor: "text-emerald-800", borderColor: "border-emerald-400", topics: ["Formação econômica de Goiás (mineração, agropecuária)", "Modernização da economia goiana (Estrada de Ferro, Goiânia, Brasília)", "Modernização da agricultura e urbanização", "População goiana: movimentos migratórios", "Economia goiana: industrialização e infraestrutura", "Regiões goianas e desigualdades regionais", "Aspectos físicos do território goiano", "História política de Goiás", "História social de Goiás", "Atualidades econômicas, políticas e sociais"] },
-            "Tecnologias da Informação": { icon: "💻", color: "bg-teal-100", textColor: "text-teal-800", borderColor: "border-teal-400", topics: ["Fundamentos de Banco de Dados (SQL, T-SQL, PL/SQL)", "Modelagem de dados: relacional e multidimensional", "Administração de banco de dados relacionais", "Pipeline de Dados (ETL, ELT)", "OLAP: Conceitos e aplicações", "Modelagem e Otimização de Bases Multidimensionais", "Pré-processamento de Dados", "Data Lake: Conceito e aplicações", "Data Mining e Data Warehouse", "Big Data: Conceitos e premissas", "Bancos de Dados Não Relacionais (NoSQL)", "Gerenciamento de Projetos (PMBOK 7ª edição)", "Metodologias Ágeis (Scrum, Kanban, Lean, XP)", "Análise de Agrupamentos (Clusterização)", "Análise Fatorial por Componentes Principais", "Análise de Correspondência (Simples e Múltipla)", "Modelos Lineares de Regressão", "Modelos de Regressão Logística", "Modelos de Regressão para Dados de Contagem", "Redes Neurais Artificiais e Machine Learning", "Visualização e Análise Exploratória de Dados", "Business Intelligence ( dashboards, Power BI)", "Séries Temporais (Sazonalidade, Tendência, ARIMA)"] },
+            "Tecnologias da Informação": { icon: "💻", color: "bg-teal-100", textColor: "text-teal-800", borderColor: "border-teal-400", topics: ["Fundamentos de Banco de Dados (SQL, T-SQL, PL/SQL)", "Modelagem de dados: relacional e multidimensional", "Administração de banco de dados relacionais", "Pipeline de Dados (ETL, ELT)", "OLAP: Conceitos e aplicações", "Modelagem e Otimização de Bases Multimensionais", "Pré-processamento de Dados", "Data Lake: Conceito e aplicações", "Data Mining e Data Warehouse", "Big Data: Conceitos e premissas", "Bancos de Dados Não Relacionais (NoSQL)", "Gerenciamento de Projetos (PMBOK 7ª edição)", "Metodologias Ágeis (Scrum, Kanban, Lean, XP)", "Análise de Agrupamentos (Clusterização)", "Análise Fatorial por Componentes Principais", "Análise de Correspondência (Simples e Múltipla)", "Modelos Lineares de Regressão", "Modelos de Regressão Logística", "Modelos de Regressão para Dados de Contagem", "Redes Neurais Artificiais e Machine Learning", "Visualização e Análise Exploratória de Dados", "Business Intelligence ( dashboards, Power BI)", "Séries Temporais (Sazonalidade, Tendência, ARIMA)"] },
             "Auditoria": { icon: "🔍", color: "bg-cyan-100", textColor: "text-cyan-800", borderColor: "border-cyan-400", topics: ["Planejamento de Auditoria", "Amostragem em Auditoria", "Testes de observância (ou de controles)", "Testes substantivos", "Testes para subavaliação e superavaliação", "Evidências de auditoria e Procedimentos", "Identificação de fraudes na escrita contábil", "Auditoria no ativo circulante", "Recomposição contábil do fluxo de caixa", "Auditoria nas contas de resultado", "Irregularidades (Ocultação de ativos, Saldo credor de caixa)", "Suprimento de caixa sem comprovação", "Aquisições não contabilizadas", "Falta de registro de passivos", "Superavaliação de custos", "Estrutura da EFD ICMS/IPI e XML da NF-e", "Relacionamento entre registros (EFD e NF-e)", "Normas Brasileiras de Auditoria (NBC TA e NBC PA)"] },
             "Contabilidade Avançada e de Custos": { icon: "📊", color: "bg-sky-100", textColor: "text-sky-800", borderColor: "border-sky-400", topics: ["Políticas Contábeis, Mudança de Estimativa e Retificação de Erro", "Mensuração a Valor Justo", "Ajuste a Valor Presente", "Instrumentos financeiros", "Propriedade para Investimento", "Operações de arrendamento mercantil", "Participações Societárias (Coligadas, Controladas, MEP)", "Reorganização de empresas (Incorporação, fusão, cisão)", "Mais valia, Goodwill e Deságio", "Subvenção e Assistência governamentais", "Conversão de demonstrações contábeis (Câmbio)", "Demonstração dos Fluxos de Caixa (DFC)", "Demonstração do Valor Adicionado (DVA)", "Conceitos e terminologia de Custos", "Classificação e apropriação dos custos", "Departamentalização", "Sistemas de Custeio (Absorção, Variável, ABC)", "Produção (Ordem, Contínua, Conjunta)", "Custos Estimados e Custo Padrão", "Análise Custo x Volume x Lucro (Ponto de Equilíbrio)", "Margem de Contribuição e Alavancagem Operacional"] },
             "Direito Tributário I": { icon: "⚖️", color: "bg-purple-100", textColor: "text-purple-800", borderColor: "border-purple-400", topics: ["Sistema Tributário Nacional na CF", "Princípios constitucionais tributários", "Espécies tributárias", "Limitações ao Poder de Tributar (Imunidades)", "Impostos da União", "Impostos dos Estados e DF", "Impostos dos Municípios", "Repartição das Receitas Tributárias", "CTN: Competência e Legisolação Tributária", "Obrigação Tributária: Fato Gerador e Sujeitos", "Responsabilidade Tributária (Sucessores, Terceiros)", "Crédito Tributário: Lançamento", "Suspensão da exigibilidade do Crédito", "Extinção do Crédito Tributário", "Exclusão do Crédito (Isenção, Anistia)", "Garantias e Privilégios do Crédito", "Administração Tributária (Fiscalização, Dívida Ativa)", "LC 24/1975 (Convênios ICMS)", "LC 87/1996 (Lei Kandir)", "LC 105/2001 (Sigilo Bancário)", "LC 116/2003 (ISS)", "LC 123/2006 (Simples Nacional)", "LC 192/2022 (ICMS Combustíveis)", "Súmulas Vinculantes do STF em matéria tributária"] },
@@ -228,9 +230,11 @@
         // --- AUTENTICAÇÃO E DADOS ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                if (userId === user.uid) return; // Evita recarregamento desnecessário
                 userId = user.uid;
                 hideAuthModal();
                 showLoading();
+                isInitialLoad = true; // Reseta para a lógica de carregamento inicial
                 const userEmailEl = document.getElementById('user-email');
                 userEmailEl.textContent = user.email;
                 userEmailEl.title = user.email;
@@ -244,7 +248,6 @@
                 }
                 userProgress = {};
                 dailyConfig = null;
-                isInitialLoad = true;
                 mainApp.classList.add('hidden');
                 document.getElementById('user-email').classList.add('hidden');
                 hideLoading();
@@ -252,62 +255,54 @@
             }
         });
         
-        // FIX: Lógica de carregamento de progresso mais robusta
-        const loadAndListenForProgress = async (uid) => {
-            if (!uid) return;
+        // FIX: Lógica de carregamento de progresso à prova de falhas
+        const loadAndListenForProgress = (uid) => {
+            if (!uid) {
+                hideLoading();
+                return;
+            }
             if (unsubscribeProgress) unsubscribeProgress();
 
             const progressRef = doc(db, 'artifacts', appId, 'users', uid);
 
-            try {
-                // Passo 1: Verifica se o documento de progresso existe antes de ouvir.
-                const docSnap = await getDoc(progressRef);
-                if (!docSnap.exists() || !docSnap.data().progress) {
-                    console.log("Documento de progresso não encontrado, criando um novo.");
+            unsubscribeProgress = onSnapshot(progressRef, (docSnap) => {
+                if (docSnap.exists() && docSnap.data().progress) {
+                    userProgress = docSnap.data().progress;
+                } else {
+                    // Se o documento não existe, cria um em memória e salva no banco.
+                    // A UI não espera o salvamento para ser exibida.
+                    console.log("Documento de progresso não encontrado, criando novo.");
                     const initialProgress = {};
                     Object.keys(disciplinasData).forEach(d => initialProgress[d] = 0);
-                    // Cria o documento com o progresso inicial.
-                    await setDoc(progressRef, { progress: initialProgress });
+                    userProgress = initialProgress;
+                    // Salva em segundo plano
+                    setDoc(progressRef, { progress: initialProgress }).catch(err => console.error("Falha ao criar progresso inicial:", err));
                 }
 
-                // Passo 2: Agora que o documento garantidamente existe, começa a ouvir por mudanças.
-                unsubscribeProgress = onSnapshot(progressRef, (snapshot) => {
-                    if (snapshot.exists() && snapshot.data().progress) {
-                        userProgress = snapshot.data().progress;
-                    } else {
-                        // Caso de fallback (raro), se o documento for deletado externamente
-                        const initialProgress = {};
-                        Object.keys(disciplinasData).forEach(d => initialProgress[d] = 0);
-                        userProgress = initialProgress;
+                // Apenas na primeira vez que os dados são recebidos (após login),
+                // decide qual tela mostrar e esconde o loader.
+                if (isInitialLoad) {
+                    initializeAppState();
+                    isInitialLoad = false; // Impede que a lógica se repita
+                } else {
+                    // Para atualizações subsequentes (concluir tópico), apenas redesenha os componentes.
+                    renderGeneralProgress();
+                    if (dailyConfig && dailyConfig.plan) {
+                        renderStudySessions(dailyConfig.plan);
                     }
-
-                    // Apenas na primeira carga de dados, decide qual tela mostrar.
-                    if (isInitialLoad) {
-                        initializeAppState();
-                        isInitialLoad = false;
-                    } else {
-                        // Em atualizações subsequentes, apenas redesenha os componentes.
-                        renderGeneralProgress();
-                        if (dailyConfig && dailyConfig.plan) {
-                            renderStudySessions(dailyConfig.plan);
-                        }
-                    }
-                }, (error) => {
-                    console.error("Erro no listener do Firestore:", error);
-                    hideLoading();
-                });
-
-            } catch (error) {
-                console.error("Erro ao buscar/criar documento de progresso:", error);
-                hideLoading();
-            }
+                }
+            }, (error) => {
+                console.error("Erro crítico no listener do Firestore:", error);
+                hideLoading(); // Garante que o usuário não fique preso
+                setFeedback("Não foi possível carregar seus dados.", "error");
+                signOut(auth); // Desloga para segurança e para o usuário tentar novamente
+            });
         };
 
         const saveProgress = async (newProgress) => {
             if (!userId) return;
             const progressRef = doc(db, 'artifacts', appId, 'users', userId);
             try {
-                // setDoc com merge:true atualiza o campo 'progress' ou cria o documento se não existir.
                 await setDoc(progressRef, { progress: newProgress }, { merge: true });
             } catch (error) {
                 console.error("Erro ao salvar progresso:", error);
@@ -352,7 +347,7 @@
         const handlePasswordReset = () => { const email = document.getElementById('reset-email').value; if(!email) { setFeedback('Por favor, insira seu e-mail.', 'error'); return; } setFeedback('Enviando e-mail...', 'info'); sendPasswordResetEmail(auth, email).then(() => setFeedback('E-mail de recuperação enviado!', 'success')).catch(error => setFeedback('Erro ao enviar e-mail.', 'error')); };
         const handleLogout = () => { signOut(auth).catch(error => console.error("Erro ao sair:", error)); };
         const switchAuthForm = (formId) => { document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active')); document.getElementById(formId).classList.add('active'); setFeedback('', 'info'); };
-        const togglePasswordVisibility = (btn) => { const input = btn.previousElementSibling; const eyeOpen = btn.querySelector('.eye-open'); const eyeClosed = btn.querySelector('.eye-closed'); if(input.type === 'password') { input.type = 'text'; eyeOpen.classList.add('hidden'); eyeClosed.classList.remove('hidden'); } else { input.type = 'password'; eyeOpen.classList.remove('hidden'); eyeClosed.classList.add('hidden'); } };
+        const togglePasswordVisibility = (btn) => { const input = btn.closest('.relative').querySelector('input'); const eyeOpen = btn.querySelector('.eye-open'); const eyeClosed = btn.querySelector('.eye-closed'); if(input.type === 'password') { input.type = 'text'; eyeOpen.classList.add('hidden'); eyeClosed.classList.remove('hidden'); } else { input.type = 'password'; eyeOpen.classList.remove('hidden'); eyeClosed.classList.add('hidden'); } };
 
         // --- EVENT LISTENERS ---
         document.addEventListener('DOMContentLoaded', () => {
